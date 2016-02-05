@@ -25,7 +25,7 @@ setuptools.setup(
     ],
     entry_points={
         'console_scripts': [
-            'recheck=recheck.main:cli',
+            'recheck=recheck.cli:main',
         ],
     },
 )
