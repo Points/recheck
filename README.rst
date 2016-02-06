@@ -11,11 +11,16 @@ recheck
 
 Re(quirements)Check
 
+
 Usage
 -----
 
+recheck -r /path/to/requirements/file
+
 Installation
 ------------
+
+pip install recheck
 
 Requirements
 ^^^^^^^^^^^^

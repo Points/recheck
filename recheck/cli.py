@@ -3,21 +3,37 @@ from pip import req as pip_req
 from pip import index as pip_index
 
 
-def list_oudated_requirements():
+def get_oudated_requirements(index_urls=[]):
     cmd = pip_list.ListCommand()
-    options, _ = cmd.parse_args(['--outdated'])
+    args = ['--outdated']
+
+    if index_urls:
+        index_url, extra_index_urls = index_urls[0], index_urls[1:]
+        args.extend(['--index-url', index_url])
+        for index_url in extra_index_urls:
+            args.extend(['--extra-index-url', index_url])
+
+    options, _ = cmd.parse_args(args)
     return (
         (dist, remote_version_raw, remote_version_parsed)
-        for dist, remote_version_raw, remote_version_parsed in cmd.find_packages_latests_versions(options)
+        for dist, remote_version_raw, remote_version_parsed
+        in cmd.find_packages_latests_versions(options)
         if dist.parsed_version != remote_version_parsed
     )
 
 
-def main():
-    finder = pip_index.PackageFinder(None, None)
-    requirements = pip_req.parse_requirements('requirements/development.txt', finder=finder)
-    # for requirement in requirements:
-    # pass
+def get_requirements_map(requirements_file):
+    package_finder = pip_index.PackageFinder(None, None)
+    requirements = pip_req.parse_requirements(requirements_file,
+                                              finder=package_finder)
+    return package_finder, {r.name: r for r in requirements}
 
-    # for dist, remote_version_raw, remote_version_parsed in list_oudated_requirements():
-    #     print(dist)
+
+def main():
+    package_finder, requirements = get_requirements_map('requirements/development.txt')
+    for dist, remote_version_raw, remote_version_parsed in get_oudated_requirements(index_urls=package_finder.index_urls):
+        direct_dependency = requirements.get(dist.key)
+        if direct_dependency:
+            print('Oudated: {} Installed: {} Latest: {}'.format(
+                dist.key, dist.version, remote_version_raw
+            ))
