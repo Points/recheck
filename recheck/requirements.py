@@ -1,9 +1,13 @@
+import os
+
 from pip.commands import list as pip_list
 from pip import req as pip_req
 from pip import index as pip_index
 
 
 def get_requirements_map(requirements_file):
+    """Get a map of requirements from the pip requirements file.
+    """
     package_finder = pip_index.PackageFinder(None, None)
     requirements = pip_req.parse_requirements(requirements_file,
                                               finder=package_finder)
@@ -27,3 +31,11 @@ def get_oudated_requirements(index_urls=[]):
         in cmd.find_packages_latests_versions(options)
         if dist.parsed_version != remote_version_parsed
     )
+
+
+def get_ignored_requirements(ignore_file):
+    if not os.path.exists(ignore_file):
+        return set([])
+
+    with open(ignore_file) as f:
+        return set(f.readlines())
