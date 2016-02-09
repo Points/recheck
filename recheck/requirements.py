@@ -3,14 +3,17 @@ import os
 from pip.commands import list as pip_list
 from pip import req as pip_req
 from pip import index as pip_index
+from pip import download as pip_download
 
 
 def get_requirements_map(requirements_file):
     """Get a map of requirements from the pip requirements file.
     """
-    package_finder = pip_index.PackageFinder(None, None)
+    session = pip_download.PipSession()
+    package_finder = pip_index.PackageFinder([], [], session=session)
     requirements = pip_req.parse_requirements(requirements_file,
-                                              finder=package_finder)
+                                              finder=package_finder,
+                                              session=session)
     return package_finder, {r.name: r for r in requirements}
 
 
@@ -28,7 +31,7 @@ def get_oudated_requirements(index_urls=[]):
     return (
         (dist, remote_version_raw, remote_version_parsed)
         for dist, remote_version_raw, remote_version_parsed
-        in cmd.find_packages_latests_versions(options)
+        in cmd.find_packages_latest_versions(options)
         if dist.parsed_version != remote_version_parsed
     )
 
