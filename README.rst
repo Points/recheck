@@ -15,21 +15,26 @@ Re(quirements)Check
 Usage
 -----
 
-recheck -r /path/to/requirements/file
+Usage::
+
+    ``recheck -r /path/to/requirements/file``
+
+You may also provide an ignore file.  The default is ``$CWD/.recheckignore``.  You can pass a different file by providing a ``-i`` flag::
+
+    recheck -r /path/to/requirements/file -i /path/to/ignore/file
+
+The ignore file should list dependencies (one per line) you wish to ignore from the check.
 
 Installation
 ------------
 
 pip install recheck
 
-Requirements
-^^^^^^^^^^^^
-
-Compatibility
--------------
 
 Licence
 -------
+
+MIT
 
 Authors
 -------

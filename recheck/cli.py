@@ -1,5 +1,5 @@
 import click
-from recheck import requirements as r
+from recheck import requirements
 from recheck import textui
 
 
@@ -13,5 +13,5 @@ def main(requirements_file, ignore_file):
     if not requirements_file:
         raise click.BadOptionUsage('Must provide requirements file')
 
-    for req in r.check_requirements(requirements_file, ignore_file):
+    for req in requirements.check_requirements(requirements_file, ignore_file):
         textui.display(req)
