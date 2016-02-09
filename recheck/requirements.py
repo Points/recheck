@@ -6,6 +6,17 @@ from pip import index as pip_index
 from pip import download as pip_download
 
 
+class PipListCommand(pip_list.ListCommand):
+    def find_packages_latest_versions(self, *args, **kwargs):
+        if hasattr(pip_list.ListCommand, 'find_packages_latest_versions'):
+            return super(PipListCommand, self).find_packages_latest_versions(*args, **kwargs)
+        elif hasattr(self, 'find_packages_latests_versions'):
+            return self.find_packages_latests_versions(*args, **kwargs)
+        else:
+            raise RuntimeError('The version of pip installed does not support '
+                               'getting latest versions of requirements')
+
+
 def get_requirements_map(requirements_file):
     """Get a map of requirements from the pip requirements file.
     """
@@ -18,7 +29,7 @@ def get_requirements_map(requirements_file):
 
 
 def get_oudated_requirements(index_urls=[]):
-    cmd = pip_list.ListCommand()
+    cmd = PipListCommand()
     args = ['--outdated']
 
     if index_urls:
