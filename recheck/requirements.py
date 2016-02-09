@@ -1,3 +1,4 @@
+import collections
 import os
 
 from pip.commands import list as pip_list
@@ -17,7 +18,7 @@ class PipListCommand(pip_list.ListCommand):
                                'getting latest versions of requirements')
 
 
-def get_requirements_map(requirements_file):
+def _get_requirements_map(requirements_file):
     """Get a map of requirements from the pip requirements file.
     """
     session = pip_download.PipSession()
@@ -28,7 +29,7 @@ def get_requirements_map(requirements_file):
     return package_finder, {r.name: r for r in requirements}
 
 
-def get_oudated_requirements(index_urls=[]):
+def _get_oudated_requirements(index_urls=[]):
     cmd = PipListCommand()
     args = ['--outdated']
 
@@ -47,9 +48,34 @@ def get_oudated_requirements(index_urls=[]):
     )
 
 
-def get_ignored_requirements(ignore_file):
+def _get_ignored_requirements(ignore_file):
     if not os.path.exists(ignore_file):
         return set([])
 
     with open(ignore_file) as f:
-        return set(f.readlines())
+        return set(map(str.strip, f.readlines()))
+
+
+OutdatedRequirement = collections.namedtuple('OutdatedRequirement',
+                                             ['name', 'installed_version', 'latest_version'])
+
+
+def check_requirements(requirements_file, ignore_file):
+    result = collections.defaultdict(list)
+
+    package_finder, requirements = _get_requirements_map(requirements_file)
+    outdated_requirements = _get_oudated_requirements(index_urls=package_finder.index_urls)
+    ignored_requirements = _get_ignored_requirements(ignore_file)
+    for dist, remote_version_raw, remote_version_parsed in outdated_requirements:
+        direct_dependency = requirements.get(dist.key)
+        if not direct_dependency:
+            continue
+
+        outdated_dependency = OutdatedRequirement(dist.key, dist.version, remote_version_raw)
+
+        if direct_dependency.name in ignored_requirements:
+            result['ignored'].append(outdated_dependency)
+        else:
+            result['outdated'].append(outdated_dependency)
+
+    return result
