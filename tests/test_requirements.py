@@ -7,15 +7,18 @@ from recheck.requirements import OutdatedRequirement
 def ignored_requirement():
     requirement = mock.Mock()
     requirement.name = 'abc'
-    return OutdatedRequirement(requirement, mock.Mock(), mock.Mock(), {'abc'})
+    return OutdatedRequirement(requirement,
+                               [mock.Mock(), mock.Mock()],
+                               [mock.Mock(), mock.Mock()],
+                               {'abc'})
 
 
 @pytest.fixture
 def outdated_requirement_minor():
     requirement = mock.Mock()
     requirement.name = 'abc'
-    installed_version = ('000001', '000002', '000001', '*final')
-    remote_version = ('000001', '000004', '000000', '*final')
+    installed_version = ('1.2.1', ('000001', '000002', '000001', '*final'))
+    remote_version = ('1.4.0', ('000001', '000004', '000000', '*final'))
     return OutdatedRequirement(requirement, installed_version, remote_version, {'def'})
 
 
@@ -23,8 +26,8 @@ def outdated_requirement_minor():
 def outdated_requirement_major():
     requirement = mock.Mock()
     requirement.name = 'abc'
-    installed_version = ('000001', '000002', '000001', '*final')
-    remote_version = ('000002', '000004', '000000', '*final')
+    installed_version = ('1.2.1', ('000001', '000002', '000001', '*final'))
+    remote_version = ('2.4.0', ('000002', '000004', '000000', '*final'))
     return OutdatedRequirement(requirement, installed_version, remote_version, {'def'})
 
 

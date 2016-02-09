@@ -1,5 +1,6 @@
 import click
 from recheck import requirements as r
+from recheck import textui
 
 
 @click.option('-r', '--requirements-file', metavar='PATH_TO_REQUIREMENTS_FILE',
@@ -13,9 +14,4 @@ def main(requirements_file, ignore_file):
         raise click.BadOptionUsage('Must provide requirements file')
 
     for req in r.check_requirements(requirements_file, ignore_file):
-        if req.status == 'ignored':
-            click.echo(click.style('Ignored: {}'.format(req), fg='green'))
-        if req.status == 'outdated:minor':
-            click.echo(click.style('Outdated: {}'.format(req), fg='red'))
-        if req.status == 'outdated:major':
-            click.echo(click.style('Outdated: {}'.format(req), fg='yellow'))
+        textui.display(req)

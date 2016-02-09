@@ -10,8 +10,8 @@ class OutdatedRequirement(object):
     def __init__(self, requirement, installed_version, remote_version, ignored_requirements):
         self._requirement = requirement
         self._name = requirement.name
-        self._installed_version = installed_version
-        self._remote_version = remote_version
+        self._installed_version, self._installed_version_parsed = installed_version
+        self._remote_version, self._remote_version_parsed = remote_version
         self._ignored_requirements = ignored_requirements
 
     @property
@@ -23,6 +23,17 @@ class OutdatedRequirement(object):
             return 'outdated:minor'
         else:
             return 'outdated:major'
+
+    @staticmethod
+    def _format_version(parsed_version):
+        return '{}.{}.{}'.format(*parsed_version)
+
+    def __str__(self):
+        return '{name}  Installed: {installed_version}  Latest: {latest_version}'.format(
+            name=self._name,
+            installed_version=self._installed_version,
+            latest_version=self._remote_version,
+        )
 
 
 class PipListCommand(pip_list.ListCommand):
@@ -84,4 +95,6 @@ def check_requirements(requirements_file, ignore_file):
         if not direct_requirement:
             continue
 
-        yield OutdatedRequirement(direct_requirement, dist.parsed_version, remote_version_parsed, ignored_requirements)
+        yield OutdatedRequirement(direct_requirement,
+                                  (dist.version, dist.parsed_version),
+                                  (remote_version_raw, remote_version_parsed), ignored_requirements)
