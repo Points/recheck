@@ -12,4 +12,10 @@ def main(requirements_file, ignore_file):
     if not requirements_file:
         raise click.BadOptionUsage('Must provide requirements file')
 
-    r.check_requirements(requirements_file, ignore_file)
+    for req in r.check_requirements(requirements_file, ignore_file):
+        if req.status == 'ignored':
+            click.echo(click.style('Ignored: {}'.format(req), fg='green'))
+        if req.status == 'outdated:minor':
+            click.echo(click.style('Outdated: {}'.format(req), fg='red'))
+        if req.status == 'outdated:major':
+            click.echo(click.style('Outdated: {}'.format(req), fg='yellow'))

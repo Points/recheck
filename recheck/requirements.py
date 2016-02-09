@@ -1,10 +1,28 @@
-import collections
 import os
 
 from pip.commands import list as pip_list
 from pip import req as pip_req
 from pip import index as pip_index
 from pip import download as pip_download
+
+
+class OutdatedRequirement(object):
+    def __init__(self, requirement, installed_version, remote_version, ignored_requirements):
+        self._requirement = requirement
+        self._name = requirement.name
+        self._installed_version = installed_version
+        self._remote_version = remote_version
+        self._ignored_requirements = ignored_requirements
+
+    @property
+    def status(self):
+        if self._name in self._ignored_requirements:
+            return 'ignored'
+
+        if self._installed_version[0] == self._remote_version[0]:
+            return 'outdated:minor'
+        else:
+            return 'outdated:major'
 
 
 class PipListCommand(pip_list.ListCommand):
@@ -56,26 +74,14 @@ def _get_ignored_requirements(ignore_file):
         return set(map(str.strip, f.readlines()))
 
 
-OutdatedRequirement = collections.namedtuple('OutdatedRequirement',
-                                             ['name', 'installed_version', 'latest_version'])
-
-
 def check_requirements(requirements_file, ignore_file):
-    result = collections.defaultdict(list)
-
     package_finder, requirements = _get_requirements_map(requirements_file)
     outdated_requirements = _get_oudated_requirements(index_urls=package_finder.index_urls)
     ignored_requirements = _get_ignored_requirements(ignore_file)
     for dist, remote_version_raw, remote_version_parsed in outdated_requirements:
-        direct_dependency = requirements.get(dist.key)
-        if not direct_dependency:
+        direct_requirement = requirements.get(dist.key)
+
+        if not direct_requirement:
             continue
 
-        outdated_dependency = OutdatedRequirement(dist.key, dist.version, remote_version_raw)
-
-        if direct_dependency.name in ignored_requirements:
-            result['ignored'].append(outdated_dependency)
-        else:
-            result['outdated'].append(outdated_dependency)
-
-    return result
+        yield OutdatedRequirement(direct_requirement, dist.parsed_version, remote_version_parsed, ignored_requirements)
