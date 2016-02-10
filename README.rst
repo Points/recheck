@@ -28,7 +28,9 @@ The ignore file should list dependencies (one per line) you wish to ignore from 
 Installation
 ------------
 
-pip install recheck
+Run::
+
+    pip install recheck
 
 
 Licence
