@@ -20,7 +20,6 @@ class OutdatedRequirement(object):
         if self._name in self._ignored_requirements:
             return 'ignored'
 
-        import ipdb; ipdb.set_trace()  # XXX BREAKPOINT
         if self._installed_version[0] == self._remote_version[0]:
             return 'outdated:minor'
         else:
@@ -28,13 +27,22 @@ class OutdatedRequirement(object):
 
     @staticmethod
     def _format_version(parsed_version):
-        return '{}.{}.{}'.format(*parsed_version)
+        parts = []
+        for part in parsed_version:
+            if part == '*final':  # *final is a marker, not part of the version
+                continue
+            try:
+                parts.append(str(int(part)))
+            except ValueError:
+                parts.append(part)
+
+        return '.'.join(parts)
 
     def __str__(self):
         return '{name}  Installed: {installed_version}  Latest: {latest_version}'.format(
             name=self._name,
-            installed_version=self._installed_version,
-            latest_version=self._remote_version,
+            installed_version=self._format_version(self._installed_version),
+            latest_version=self._format_version(self._remote_version),
         )
 
 
@@ -49,7 +57,7 @@ class Package(object):
 
     @property
     def installed_version(self):
-        return self._distribution.version
+        return self._distribution.parsed_version
 
     @property
     def remote_version(self):
@@ -87,7 +95,6 @@ class PipListCommand(pip_list.ListCommand):
         elif hasattr(self, 'find_packages_latest_versions'):
             # pip 8+
             for dist, remote_version, type in self.find_packages_latest_versions(options):
-                import ipdb; ipdb.set_trace()  # XXX BREAKPOINT
                 yield Package(dist, remote_version)
         else:
             raise RuntimeError('The version of pip installed does not support '
