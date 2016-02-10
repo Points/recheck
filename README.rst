@@ -17,7 +17,7 @@ Usage
 
 Usage::
 
-    ``recheck -r /path/to/requirements/file``
+    recheck -r /path/to/requirements/file
 
 You may also provide an ignore file.  The default is ``$CWD/.recheckignore``.  You can pass a different file by providing a ``-i`` flag::
 
