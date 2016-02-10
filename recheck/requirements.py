@@ -11,8 +11,8 @@ class OutdatedRequirement(object):
                  ignored_requirements):
         self._requirement = requirement
         self._name = requirement.name
-        self._installed_version, self._installed_version_parsed = installed_version
-        self._remote_version, self._remote_version_parsed = remote_version
+        self._installed_version = installed_version
+        self._remote_version = remote_version
         self._ignored_requirements = ignored_requirements
 
     @property
@@ -20,6 +20,7 @@ class OutdatedRequirement(object):
         if self._name in self._ignored_requirements:
             return 'ignored'
 
+        import ipdb; ipdb.set_trace()  # XXX BREAKPOINT
         if self._installed_version[0] == self._remote_version[0]:
             return 'outdated:minor'
         else:
@@ -42,6 +43,18 @@ class Package(object):
         self._distribution = distribution
         self._remote_version = remote_version
 
+    @property
+    def name(self):
+        return self._distribution.key
+
+    @property
+    def installed_version(self):
+        return self._distribution.version
+
+    @property
+    def remote_version(self):
+        return self._remote_version
+
     def is_outdated(self):
         return self._distribution.parsed_version != self._remote_version
 
@@ -51,8 +64,8 @@ class PipListCommand(pip_list.ListCommand):
         # The public API for pip's ListCommand has changed dramatically (both
         # in name and return value) so this adaptor is needed to hide the
         # underlying pip details from the calling code.
-        if hasattr(pip_list.ListCommand, 'find_packages_latest_versions'):
-            for latest_version in self.find_packages_latest_versions(options):
+        if hasattr(self, 'find_packages_latests_versions'):
+            for latest_version in self.find_packages_latests_versions(options):
                 if not isinstance(latest_version, tuple):
                     raise TypeError()
 
@@ -71,9 +84,10 @@ class PipListCommand(pip_list.ListCommand):
                     dist, remote_version_raw, remote_version_parsed = latest_version
                     yield Package(dist, remote_version_parsed)
 
-        elif hasattr(self, 'find_packages_latests_versions'):
+        elif hasattr(self, 'find_packages_latest_versions'):
             # pip 8+
-            for dist, remote_version, type in self.find_packages_latests_versions(options):
+            for dist, remote_version, type in self.find_packages_latest_versions(options):
+                import ipdb; ipdb.set_trace()  # XXX BREAKPOINT
                 yield Package(dist, remote_version)
         else:
             raise RuntimeError('The version of pip installed does not support '
@@ -119,12 +133,11 @@ def check_requirements(requirements_file, ignore_file):
     package_finder, requirements = _get_requirements_map(requirements_file)
     outdated_requirements = _get_oudated_requirements(index_urls=package_finder.index_urls)
     ignored_requirements = _get_ignored_requirements(ignore_file)
-    for dist, remote_version_raw, remote_version_parsed in outdated_requirements:
-        direct_requirement = requirements.get(dist.key)
+    for package in outdated_requirements:
+        direct_requirement = requirements.get(package.name)
 
         if not direct_requirement:
             continue
 
-        yield OutdatedRequirement(direct_requirement,
-                                  (dist.version, dist.parsed_version),
-                                  (remote_version_raw, remote_version_parsed), ignored_requirements)
+        yield OutdatedRequirement(direct_requirement, package.installed_version,
+                                  package.remote_version, ignored_requirements)
