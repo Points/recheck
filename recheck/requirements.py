@@ -124,7 +124,7 @@ def parse_result(line):
         return None
 
 
-def _get_ignored_requirements(ignore_file):
+def get_ignored_requirements(ignore_file):
     if not os.path.exists(ignore_file):
         return set([])
 

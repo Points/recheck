@@ -1,11 +1,18 @@
+import sys
 import click
 
 
-def display(outdated_requirement):
-    req = outdated_requirement
-    if req.status == 'ignored':
-        click.echo(click.style('Ignored: {}'.format(req), fg='green'))
-    if req.status == 'outdated:minor':
-        click.echo(click.style('Outdated: {}'.format(req), fg='red'))
-    if req.status == 'outdated:major':
-        click.echo(click.style('Outdated: {}'.format(req), fg='yellow'))
+def echo(txt, colour):
+    click.echo(click.style(txt, fg=colour))
+
+
+def render_requirement(r, colour):
+    click.echo(click.style('{:12} {} -> {}'.format(r.name, r.installed_version, r.remote_version), fg=colour))
+
+
+def progress(indicator='.'):
+    sys.stderr.write(indicator)
+
+
+def newline():
+    sys.stderr.write('\n')
