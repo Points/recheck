@@ -29,7 +29,9 @@ def main(requirements_file, ignore_file):
 
     sentinel = ''
     for line in iter(proc.stdout.readline, sentinel):
-        print line
+        req = requirements.parse_result(line)
+        if req:
+            print(req)
 
     # for line in iter(proc.stderr.readline, sentinel):
     #     print line

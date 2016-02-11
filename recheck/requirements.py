@@ -79,7 +79,7 @@ OutdatedRequirement = collections.namedtuple('OutdatedRequirement',
 
 def parse_result(line):
     try:
-        name, info = line.split(' ', 1)
+        name, info = line.strip().split(' ', 1)
         _, installed_version, _, remote_version = info[1:-1].split(' ')
         return OutdatedRequirement(name, installed_version, remote_version)
     except ValueError:
