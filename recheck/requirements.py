@@ -6,6 +6,28 @@ from pip import index as pip_index
 from pip import download as pip_download
 
 
+def _read_lines_from_file(filename):
+    with open(filename, 'r') as f:
+        return f.readlines()
+
+
+class RequirementsParser(object):
+    def __init__(self, requirements_file):
+        self._requirements_files = [requirements_file]
+        self._direct_requirements = set()
+        self._parse()
+
+    def _parse(self):
+        lines = _read_lines_from_file(self._requirements_files[0])
+        for line in lines:
+            req, _ = line.split('==')
+            self.direct_requirements.add(req)
+
+    @property
+    def direct_requirements(self):
+        return self._direct_requirements
+
+
 class OutdatedRequirement(object):
     def __init__(self, requirement, installed_version, remote_version,
                  ignored_requirements):

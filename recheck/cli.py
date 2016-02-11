@@ -1,8 +1,7 @@
-import collections
-import sys
+import subprocess
 
 import click
-from recheck import requirements, textui
+from recheck import requirements
 
 
 @click.option('-r', '--requirements-file', metavar='PATH_TO_REQUIREMENTS_FILE',
@@ -15,19 +14,17 @@ def main(requirements_file, ignore_file):
     if not requirements_file:
         raise click.BadOptionUsage('Must provide requirements file')
 
-    click.echo('Fetching latest package info...')
+    requirements_parser = requirements.RequirementsParser(requirements_file)
+    direct_requirements = requirements_parser.direct_requirements
+    index_urls = requirements_parser.extra_index_urls
 
-    outdated_requirements = collections.defaultdict(list)
-    for req in requirements.check_requirements(requirements_file, ignore_file):
-        outdated_requirements[req.status].append(req)
+    # parse the requirements file to get the index-urls
+    proc = subprocess.Popen(['pip', 'list', '--outdated'],
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-    for req in outdated_requirements['outdated:minor']:
-        textui.display(req)
+    sentinel = ''
+    for line in iter(proc.stdout.readline, sentinel):
+        print line
 
-    for req in outdated_requirements['outdated:minor']:
-        textui.display(req)
-
-    if outdated_requirements['outdated:minor'] or outdated_requirements['outdated:major']:
-        sys.exit(1)
-
-    sys.exit(0)
+    for line in iter(proc.stderr.readline, sentinel):
+        print line

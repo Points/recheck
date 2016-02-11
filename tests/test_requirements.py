@@ -1,37 +1,23 @@
 import mock
 import pytest
-from recheck.requirements import OutdatedRequirement
+from recheck import requirements
 
 
-@pytest.fixture
-def ignored_requirement():
-    requirement = mock.Mock()
-    requirement.name = 'abc'
-    return OutdatedRequirement(requirement,
-                               [mock.Mock(), mock.Mock()],
-                               [mock.Mock(), mock.Mock()],
-                               {'abc'})
+@mock.patch('recheck.requirements._read_lines_from_file')
+def test_no_direct_requirements(mock_read_lines_from_file):
+    mock_read_lines_from_file.return_value = []
+    requirements_parser = requirements.RequirementsParser('requirements.txt')
+    assert requirements_parser.direct_requirements == set()
 
 
-@pytest.fixture
-def outdated_requirement_minor():
-    requirement = mock.Mock()
-    requirement.name = 'abc'
-    installed_version = ('000001', '000002', '000001', '*final')
-    remote_version = ('000001', '000004', '000000', '*final')
-    return OutdatedRequirement(requirement, installed_version, remote_version, {'def'})
+@mock.patch('recheck.requirements._read_lines_from_file')
+def test_direct_requirements_single_file(mock_read_lines_from_file):
+    mock_read_lines_from_file.return_value = ['requests==1.3']
+    requirements_parser = requirements.RequirementsParser('requirements.txt')
+    assert requirements_parser.direct_requirements == set(['requests'])
 
-
-@pytest.fixture
-def outdated_requirement_major():
-    requirement = mock.Mock()
-    requirement.name = 'abc'
-    installed_version = ('000001', '000002', '000001', '*final')
-    remote_version = ('000002', '000004', '000000', '*final')
-    return OutdatedRequirement(requirement, installed_version, remote_version, {'def'})
-
-
-def test_outdated_requirement_status(ignored_requirement, outdated_requirement_minor, outdated_requirement_major):
-    assert ignored_requirement.status == 'ignored'
-    assert outdated_requirement_minor.status == 'outdated:minor'
-    assert outdated_requirement_major.status == 'outdated:major'
+@mock.patch('recheck.requirements._read_lines_from_file')
+def test_multiple_direct_requirements_single_file(mock_read_lines_from_file):
+    mock_read_lines_from_file.return_value = ['requests==1.3', 'mock==0.1']
+    requirements_parser = requirements.RequirementsParser('requirements.txt')
+    assert requirements_parser.direct_requirements == set(['requests', 'mock'])
