@@ -73,6 +73,19 @@ class RequirementsParser(object):
         return self._extra_index_urls
 
 
+OutdatedRequirement = collections.namedtuple('OutdatedRequirement',
+                                             ['name', 'installed_version', 'remote_version'])
+
+
+def parse_result(line):
+    try:
+        name, info = line.split(' ', 1)
+        _, installed_version, _, remote_version = info[1:-1].split(' ')
+        return OutdatedRequirement(name, installed_version, remote_version)
+    except ValueError:
+        return None
+
+
 def _get_ignored_requirements(ignore_file):
     if not os.path.exists(ignore_file):
         return set([])

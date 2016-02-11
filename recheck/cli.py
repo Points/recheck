@@ -25,7 +25,6 @@ def main(requirements_file, ignore_file):
         for index_url in requirements_parser.extra_index_urls:
             args.append('--extra-index-url={}'.format(index_url))
 
-    print(args)
     proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     sentinel = ''

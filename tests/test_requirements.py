@@ -95,3 +95,15 @@ def test_direct_requirements_with_one_level_of_includes():
         assert requirements_parser.direct_requirements == set(['requests', 'argparse'])
         assert [mock.call(requirements_file_name)
                 for requirements_file_name in filenames] == mock_read_lines_from_file.call_args_list
+
+
+def assert_outdated_requirement(line, expected):
+    assert requirements.parse_result(line) == expected
+
+
+def test_parse_result():
+    assert_outdated_requirement('requests (Current: 2.5.1 Latest: 2.9.1)',
+                                requirements.OutdatedRequirement('requests', '2.5.1', '2.9.1'))
+    assert_outdated_requirement('pytz (Current: 2015.6 Latest: 2015.7)',
+                                requirements.OutdatedRequirement('pytz', '2015.6', '2015.7'))
+    assert_outdated_requirement('Blah', None)
