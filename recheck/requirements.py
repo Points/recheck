@@ -1,3 +1,4 @@
+import collections
 import os
 import re
 
@@ -14,7 +15,7 @@ def _read_lines_from_file(filename):
 
 class RequirementsParser(object):
     def __init__(self, requirements_file):
-        self._requirements_files = [requirements_file]
+        self._requirements_files = collections.deque([requirements_file])
         self._direct_requirements = set()
         self._index_url = None
         self._extra_index_urls = []
@@ -40,14 +41,20 @@ class RequirementsParser(object):
         self.direct_requirements.add(req.strip())
 
     def _parse(self):
-        lines = _read_lines_from_file(self._requirements_files[0])
-        for line in lines:
-            if line.startswith('#'):
-                self._handle_comment(line)
-            elif line.startswith('-'):
-                self._handle_pip_directive(line)
-            else:
-                self._handle_requirement_line(line)
+        try:
+            while True:
+                requirement_file = self._requirements_files.popleft()
+                lines = _read_lines_from_file(requirement_file)
+                for line in lines:
+                    if line.startswith('#'):
+                        self._handle_comment(line)
+                    elif line.startswith('-'):
+                        self._handle_pip_directive(line)
+                    else:
+                        self._handle_requirement_line(line)
+        except IndexError:
+            # No unprocessed requirements file. Parsing complete
+            return None
 
     @property
     def direct_requirements(self):
@@ -62,126 +69,126 @@ class RequirementsParser(object):
         return self._extra_index_urls
 
 
-class OutdatedRequirement(object):
-    def __init__(self, requirement, installed_version, remote_version,
-                 ignored_requirements):
-        self._requirement = requirement
-        self._name = requirement.name
-        self._installed_version = installed_version
-        self._remote_version = remote_version
-        self._ignored_requirements = ignored_requirements
+# class OutdatedRequirement(object):
+#     def __init__(self, requirement, installed_version, remote_version,
+#                  ignored_requirements):
+#         self._requirement = requirement
+#         self._name = requirement.name
+#         self._installed_version = installed_version
+#         self._remote_version = remote_version
+#         self._ignored_requirements = ignored_requirements
 
-    @property
-    def status(self):
-        if self._name in self._ignored_requirements:
-            return 'ignored'
+#     @property
+#     def status(self):
+#         if self._name in self._ignored_requirements:
+#             return 'ignored'
 
-        if self._installed_version[0] == self._remote_version[0]:
-            return 'outdated:minor'
-        else:
-            return 'outdated:major'
+#         if self._installed_version[0] == self._remote_version[0]:
+#             return 'outdated:minor'
+#         else:
+#             return 'outdated:major'
 
-    @staticmethod
-    def _format_version(parsed_version):
-        parts = []
-        for part in parsed_version:
-            if part == '*final':  # *final is a marker, not part of the version
-                continue
-            try:
-                parts.append(str(int(part)))
-            except ValueError:
-                parts.append(part)
+#     @staticmethod
+#     def _format_version(parsed_version):
+#         parts = []
+#         for part in parsed_version:
+#             if part == '*final':  # *final is a marker, not part of the version
+#                 continue
+#             try:
+#                 parts.append(str(int(part)))
+#             except ValueError:
+#                 parts.append(part)
 
-        return '.'.join(parts)
+#         return '.'.join(parts)
 
-    def __str__(self):
-        return '{name}  Installed: {installed_version}  Latest: {latest_version}'.format(
-            name=self._name,
-            installed_version=self._format_version(self._installed_version),
-            latest_version=self._format_version(self._remote_version),
-        )
-
-
-class Package(object):
-    def __init__(self, distribution, remote_version):
-        self._distribution = distribution
-        self._remote_version = remote_version
-
-    @property
-    def name(self):
-        return self._distribution.key
-
-    @property
-    def installed_version(self):
-        return self._distribution.parsed_version
-
-    @property
-    def remote_version(self):
-        return self._remote_version
-
-    def is_outdated(self):
-        return self._distribution.parsed_version != self._remote_version
+#     def __str__(self):
+#         return '{name}  Installed: {installed_version}  Latest: {latest_version}'.format(
+#             name=self._name,
+#             installed_version=self._format_version(self._installed_version),
+#             latest_version=self._format_version(self._remote_version),
+#         )
 
 
-class PipListCommand(pip_list.ListCommand):
-    def find_latest_versions(self, options):
-        # The public API for pip's ListCommand has changed dramatically (both
-        # in name and return value) so this adaptor is needed to hide the
-        # underlying pip details from the calling code.
-        if hasattr(self, 'find_packages_latests_versions'):
-            for latest_version in self.find_packages_latests_versions(options):
-                if not isinstance(latest_version, tuple):
-                    raise TypeError()
+# class Package(object):
+#     def __init__(self, distribution, remote_version):
+#         self._distribution = distribution
+#         self._remote_version = remote_version
 
-                if len(latest_version) == 2:
-                    # pip 6
-                    dist, remote_version = latest_version
-                    yield Package(dist, remote_version)
+#     @property
+#     def name(self):
+#         return self._distribution.key
 
-                if len(latest_version) == 3 and isinstance(latest_version[-1], basestring):
-                    # pip 7
-                    dist, remote_version_parsed, _ = latest_version
-                    yield Package(dist, remote_version_parsed)
+#     @property
+#     def installed_version(self):
+#         return self._distribution.parsed_version
 
-                else:
-                    # assume pip 1.5
-                    dist, remote_version_raw, remote_version_parsed = latest_version
-                    yield Package(dist, remote_version_parsed)
+#     @property
+#     def remote_version(self):
+#         return self._remote_version
 
-        elif hasattr(self, 'find_packages_latest_versions'):
-            # pip 8+
-            for dist, remote_version, type in self.find_packages_latest_versions(options):
-                yield Package(dist, remote_version)
-        else:
-            raise RuntimeError('The version of pip installed does not support '
-                               'getting latest versions of requirements')
+#     def is_outdated(self):
+#         return self._distribution.parsed_version != self._remote_version
 
 
-def _get_requirements_map(requirements_file):
-    """Get a map of requirements from the pip requirements file.
-    """
-    session = pip_download.PipSession()
-    package_finder = pip_index.PackageFinder([], [], session=session)
-    requirements = pip_req.parse_requirements(requirements_file,
-                                              finder=package_finder,
-                                              session=session)
-    return package_finder, {r.name: r for r in requirements}
+# class PipListCommand(pip_list.ListCommand):
+#     def find_latest_versions(self, options):
+#         # The public API for pip's ListCommand has changed dramatically (both
+#         # in name and return value) so this adaptor is needed to hide the
+#         # underlying pip details from the calling code.
+#         if hasattr(self, 'find_packages_latests_versions'):
+#             for latest_version in self.find_packages_latests_versions(options):
+#                 if not isinstance(latest_version, tuple):
+#                     raise TypeError()
+
+#                 if len(latest_version) == 2:
+#                     # pip 6
+#                     dist, remote_version = latest_version
+#                     yield Package(dist, remote_version)
+
+#                 if len(latest_version) == 3 and isinstance(latest_version[-1], basestring):
+#                     # pip 7
+#                     dist, remote_version_parsed, _ = latest_version
+#                     yield Package(dist, remote_version_parsed)
+
+#                 else:
+#                     # assume pip 1.5
+#                     dist, remote_version_raw, remote_version_parsed = latest_version
+#                     yield Package(dist, remote_version_parsed)
+
+#         elif hasattr(self, 'find_packages_latest_versions'):
+#             # pip 8+
+#             for dist, remote_version, type in self.find_packages_latest_versions(options):
+#                 yield Package(dist, remote_version)
+#         else:
+#             raise RuntimeError('The version of pip installed does not support '
+#                                'getting latest versions of requirements')
 
 
-def _get_oudated_requirements(index_urls=[]):
-    cmd = PipListCommand()
-    args = ['--outdated']
+# def _get_requirements_map(requirements_file):
+#     """Get a map of requirements from the pip requirements file.
+#     """
+#     session = pip_download.PipSession()
+#     package_finder = pip_index.PackageFinder([], [], session=session)
+#     requirements = pip_req.parse_requirements(requirements_file,
+#                                               finder=package_finder,
+#                                               session=session)
+#     return package_finder, {r.name: r for r in requirements}
 
-    if index_urls:
-        index_url, extra_index_urls = index_urls[0], index_urls[1:]
-        args.extend(['--index-url', index_url])
-        for index_url in extra_index_urls:
-            args.extend(['--extra-index-url', index_url])
 
-    options, _ = cmd.parse_args(args)
+# def _get_oudated_requirements(index_urls=[]):
+#     cmd = PipListCommand()
+#     args = ['--outdated']
 
-    return (package for package in cmd.find_latest_versions(options)
-            if package.is_outdated())
+#     if index_urls:
+#         index_url, extra_index_urls = index_urls[0], index_urls[1:]
+#         args.extend(['--index-url', index_url])
+#         for index_url in extra_index_urls:
+#             args.extend(['--extra-index-url', index_url])
+
+#     options, _ = cmd.parse_args(args)
+
+#     return (package for package in cmd.find_latest_versions(options)
+#             if package.is_outdated())
 
 
 def _get_ignored_requirements(ignore_file):

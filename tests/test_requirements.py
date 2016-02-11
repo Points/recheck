@@ -1,4 +1,6 @@
+import collections
 import contextlib
+import operator
 
 import mock
 import pytest
@@ -78,3 +80,19 @@ def test_with_extra_index_urls():
                                None,
                                ['http://index0.example.com',
                                 'http://index1.example.com'])
+
+
+@pytest.mark.only
+def test_direct_requirements_with_one_level_of_includes():
+    requirement_files = [
+        ('requirements.txt', ['-r base.txt', 'requests']),
+        ('base.txt', ['argparse']),
+    ]
+    filenames = map(operator.itemgetter(0), requirement_files)
+    filelines = map(operator.itemgetter(1), requirement_files)
+    with mock.patch('recheck.requirements._read_lines_from_file') as mock_read_lines_from_file:
+        mock_read_lines_from_file.side_effect = filelines
+        requirements_parser = requirements.RequirementsParser(filenames[0])
+        assert requirements_parser.direct_requirements == set(['requests', 'argparse'])
+        assert [mock.call(requirements_file_name)
+                for requirements_file_name in filenames] == mock_read_lines_from_file.call_args_list
