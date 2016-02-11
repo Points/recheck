@@ -110,7 +110,7 @@ def test_parse_result():
 
 
 def assert_parse_version(version_str, expected_version):
-    assert requirements.parse_version(version_str) == expected_version
+    assert requirements._parse_version(version_str) == expected_version
 
 
 def test_parse_version():

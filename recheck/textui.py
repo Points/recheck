@@ -7,7 +7,7 @@ def echo(txt, colour):
 
 
 def render_requirement(r, colour):
-    click.echo(click.style('{:12} {} -> {}'.format(r.name, r.installed_version, r.remote_version), fg=colour))
+    click.echo(click.style('{:12} {:8} -> {:8}'.format(r.name, r.installed_version, r.remote_version), fg=colour))
 
 
 def progress(indicator='.'):

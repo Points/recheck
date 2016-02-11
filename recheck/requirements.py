@@ -81,7 +81,7 @@ OutdatedRequirement = collections.namedtuple('OutdatedRequirement',
 Version = collections.namedtuple('Version', ['major', 'minor', 'rev'])
 
 
-def parse_version(version_str):
+def _parse_version(version_str):
     def int_or_str(s):
         try:
             return int(s)
@@ -101,8 +101,8 @@ def parse_version(version_str):
 
 
 def _status(self):
-    installed_version =  parse_version(self.installed_version)
-    remote_version = parse_version(self.remote_version)
+    installed_version =  _parse_version(self.installed_version)
+    remote_version = _parse_version(self.remote_version)
 
     if installed_version.major < remote_version.major:
         return 'outdated:major'

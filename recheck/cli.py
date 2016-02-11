@@ -17,21 +17,11 @@ def main(requirements_file, ignore_file):
 
     requirements_parser = requirements.RequirementsParser(requirements_file)
 
-    args = ['pip', 'list', '--outdated']
-    if requirements_parser.index_url:
-        args.append('--index-url={}'.format(requirements_parser.index_url))
-
-    if requirements_parser.extra_index_urls:
-        for index_url in requirements_parser.extra_index_urls:
-            args.append('--extra-index-url={}'.format(index_url))
-
-    proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
     ignored_requirements = requirements.get_ignored_requirements(ignore_file)
 
     ignored, outdated_major, outdated_minor = set(), set(), set()
-
-    for line in iter(proc.stdout.readline, ''):
+    for line in _list_oudated_requirements(requirements_parser.index_url,
+                                           requirements_parser.extra_index_urls):
         textui.progress()
         req = requirements.parse_result(line)
         if not req:
@@ -56,14 +46,26 @@ def main(requirements_file, ignore_file):
 
     textui.newline()
 
-    render_outdated_requirements('Minor upgrades:', outdated_minor, 'yellow')
-    render_outdated_requirements('Major upgrades:', outdated_major, 'red')
+    _render_outdated_requirements('Minor upgrades:', outdated_minor, 'yellow')
+    _render_outdated_requirements('Major upgrades:', outdated_major, 'red')
 
     if outdated_major or outdated_minor:
         sys.exit(1)
 
 
-def render_outdated_requirements(prompt, requirement_set, colour):
+def _build_pip_list_arg(index_url, extra_index_urls):
+    args = ['pip', 'list', '--outdated']
+    if index_url:
+        args.append('--index-url={}'.format(index_url))
+
+    if extra_index_urls:
+        args.extend(['--extra-index-url={}'.format(index_url)
+                     for index_url in extra_index_urls])
+
+    return args
+
+
+def _render_outdated_requirements(prompt, requirement_set, colour):
     if requirement_set:
         textui.echo(prompt, colour='white')
 
@@ -71,3 +73,9 @@ def render_outdated_requirements(prompt, requirement_set, colour):
         textui.render_requirement(req, colour=colour)
 
     textui.newline()
+
+
+def _list_oudated_requirements(index_url, extra_index_urls):
+    args = _build_pip_list_arg(index_url, extra_index_urls)
+    proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    return iter(proc.stdout.readline, '')
