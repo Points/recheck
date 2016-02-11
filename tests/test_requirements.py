@@ -82,7 +82,6 @@ def test_with_extra_index_urls():
                                 'http://index1.example.com'])
 
 
-@pytest.mark.only
 def test_direct_requirements_with_one_level_of_includes():
     requirement_files = [
         ('requirements.txt', ['-r base.txt', 'requests']),
