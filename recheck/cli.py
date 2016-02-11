@@ -31,8 +31,8 @@ def main(requirements_file, ignore_file):
 
     ignored, outdated_major, outdated_minor = set(), set(), set()
 
-    sentinel = ''
-    for line in iter(proc.stdout.readline, sentinel):
+    for line in iter(proc.stdout.readline, ''):
+        textui.progress()
         req = requirements.parse_result(line)
         if not req:
             # the output does not resemble an outdated requirement
@@ -42,30 +42,32 @@ def main(requirements_file, ignore_file):
             # not a direct requirement
             continue
 
-        textui.progress()
-
         if req.name in ignored_requirements:
             ignored.add(req)
+            continue
 
         if req.status == 'outdated:minor':
             outdated_minor.add(req)
+            continue
 
         if req.status == 'outdated:major':
             outdated_major.add(req)
+            continue
 
     textui.newline()
 
-    if outdated_minor:
-        textui.echo('Minor upgrades:', colour='white')
-
-    for req in outdated_minor:
-        textui.render_requirement(req, colour='yellow')
-
-    if outdated_major:
-        textui.echo('Major upgrades:', colour='white')
-
-    for req in outdated_major:
-        textui.render_requirement(req, colour='red')
+    render_outdated_requirements('Minor upgrades:', outdated_minor, 'yellow')
+    render_outdated_requirements('Major upgrades:', outdated_major, 'red')
 
     if outdated_major or outdated_minor:
         sys.exit(1)
+
+
+def render_outdated_requirements(prompt, requirement_set, colour):
+    if requirement_set:
+        textui.echo(prompt, colour='white')
+
+    for req in requirement_set:
+        textui.render_requirement(req, colour=colour)
+
+    textui.newline()
