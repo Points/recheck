@@ -16,13 +16,23 @@ class RequirementsParser(object):
     def __init__(self, requirements_file):
         self._requirements_files = [requirements_file]
         self._direct_requirements = set()
+        self._index_url = None
+        self._extra_index_urls = []
         self._parse()
 
     def _handle_comment(self, line):
         return
 
     def _handle_pip_directive(self, line):
-        return
+        directive, value = re.split('\s+|=', line)
+        if directive == '-r':
+            self._requirements_files.append(value)
+        if directive == '--index-url':
+            self._index_url = value
+        if directive == '--extra-index-url':
+            self._extra_index_urls.append(value)
+        if directive == '-e':
+            raise NotImplementedError()
 
     def _handle_requirement_line(self, line):
         result = re.split('==|>|<|>=|<=', line)
@@ -39,10 +49,17 @@ class RequirementsParser(object):
             else:
                 self._handle_requirement_line(line)
 
-
     @property
     def direct_requirements(self):
         return self._direct_requirements
+
+    @property
+    def index_url(self):
+        return self._index_url
+
+    @property
+    def extra_index_urls(self):
+        return self._extra_index_urls
 
 
 class OutdatedRequirement(object):
