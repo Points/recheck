@@ -16,15 +16,21 @@ def main(requirements_file, ignore_file):
 
     requirements_parser = requirements.RequirementsParser(requirements_file)
     direct_requirements = requirements_parser.direct_requirements
-    index_urls = requirements_parser.extra_index_urls
 
-    # parse the requirements file to get the index-urls
-    proc = subprocess.Popen(['pip', 'list', '--outdated'],
-                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    args = ['pip', 'list', '--outdated']
+    if requirements_parser.index_url:
+        args.append('--index-url={}'.format(requirements_parser.index_url))
+
+    if requirements_parser.extra_index_urls:
+        for index_url in requirements_parser.extra_index_urls:
+            args.append('--extra-index-url={}'.format(index_url))
+
+    print(args)
+    proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     sentinel = ''
     for line in iter(proc.stdout.readline, sentinel):
         print line
 
-    for line in iter(proc.stderr.readline, sentinel):
-        print line
+    # for line in iter(proc.stderr.readline, sentinel):
+    #     print line

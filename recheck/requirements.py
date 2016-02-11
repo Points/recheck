@@ -15,6 +15,7 @@ def _read_lines_from_file(filename):
 
 class RequirementsParser(object):
     def __init__(self, requirements_file):
+        self._dirname = os.path.dirname(requirements_file)
         self._requirements_files = collections.deque([requirements_file])
         self._direct_requirements = set()
         self._index_url = None
@@ -25,15 +26,18 @@ class RequirementsParser(object):
         return
 
     def _handle_pip_directive(self, line):
-        directive, value = re.split('\s+|=', line)
+        directive, value = re.split('\s+|=', line, 1)
         if directive == '-r':
-            self._requirements_files.append(value)
+            filepath = value.strip()
+            if not os.path.isabs(filepath):
+                filepath = os.path.join(self._dirname, filepath)
+            self._requirements_files.append(filepath)
         if directive == '--index-url':
-            self._index_url = value
+            self._index_url = value.strip()
         if directive == '--extra-index-url':
-            self._extra_index_urls.append(value)
+            self._extra_index_urls.append(value.strip())
         if directive == '-e':
-            raise NotImplementedError()
+            pass  # TODO: Need to handle editable installs?
 
     def _handle_requirement_line(self, line):
         result = re.split('==|>|<|>=|<=', line)
