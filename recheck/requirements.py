@@ -20,8 +20,8 @@ class RequirementsParser(object):
     def _parse(self):
         lines = _read_lines_from_file(self._requirements_files[0])
         for line in lines:
-            req, _ = line.split('==')
-            self.direct_requirements.add(req)
+            req = line.split('==')[0]
+            self.direct_requirements.add(req.strip())
 
     @property
     def direct_requirements(self):
