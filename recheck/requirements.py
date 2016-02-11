@@ -1,4 +1,5 @@
 import os
+import re
 
 from pip.commands import list as pip_list
 from pip import req as pip_req
@@ -17,11 +18,27 @@ class RequirementsParser(object):
         self._direct_requirements = set()
         self._parse()
 
+    def _handle_comment(self, line):
+        return
+
+    def _handle_pip_directive(self, line):
+        return
+
+    def _handle_requirement_line(self, line):
+        result = re.split('==|>|<|>=|<=', line)
+        req = result[0]
+        self.direct_requirements.add(req.strip())
+
     def _parse(self):
         lines = _read_lines_from_file(self._requirements_files[0])
         for line in lines:
-            req = line.split('==')[0]
-            self.direct_requirements.add(req.strip())
+            if line.startswith('#'):
+                self._handle_comment(line)
+            elif line.startswith('-'):
+                self._handle_pip_directive(line)
+            else:
+                self._handle_requirement_line(line)
+
 
     @property
     def direct_requirements(self):
