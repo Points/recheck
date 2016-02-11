@@ -15,7 +15,6 @@ def main(requirements_file, ignore_file):
         raise click.BadOptionUsage('Must provide requirements file')
 
     requirements_parser = requirements.RequirementsParser(requirements_file)
-    direct_requirements = requirements_parser.direct_requirements
 
     args = ['pip', 'list', '--outdated']
     if requirements_parser.index_url:
@@ -31,7 +30,5 @@ def main(requirements_file, ignore_file):
     for line in iter(proc.stdout.readline, sentinel):
         req = requirements.parse_result(line)
         if req:
-            print(req)
-
-    # for line in iter(proc.stderr.readline, sentinel):
-    #     print line
+            if req.name in requirements_parser.direct_requirements:
+                print(req)

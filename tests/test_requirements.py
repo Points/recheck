@@ -107,3 +107,20 @@ def test_parse_result():
     assert_outdated_requirement('pytz (Current: 2015.6 Latest: 2015.7)',
                                 requirements.OutdatedRequirement('pytz', '2015.6', '2015.7'))
     assert_outdated_requirement('Blah', None)
+
+
+def assert_parse_version(version_str, expected_version):
+    assert requirements.parse_version(version_str) == expected_version
+
+
+def test_parse_version():
+    assert_parse_version('1', requirements.Version(1, None, None))
+    assert_parse_version('1.0', requirements.Version(1, 0, None))
+    assert_parse_version('1.0.1', requirements.Version(1, 0, 1))
+    assert_parse_version('1.0.1-pts', requirements.Version(1, 0, '1-pts'))
+
+
+def test_outdated_requirement_status():
+    assert requirements.OutdatedRequirement('foo', '1.2', '1.3.0').status == 'outdated:minor'
+    assert requirements.OutdatedRequirement('foo', '2.2', '5.3.0').status == 'outdated:major'
+    assert requirements.OutdatedRequirement('foo', '5.3.0', '5.3.3').status == 'outdated:rev'
