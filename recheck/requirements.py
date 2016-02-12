@@ -1,4 +1,5 @@
 import collections
+import operator
 import os
 import re
 
@@ -42,6 +43,20 @@ class OutdatedRequirement(object):
             return 'outdated:minor'
         if installed_version.rev < remote_version.rev:
             return 'outdated:rev'
+
+    def __eq__(self, other):
+        return all([
+            self.name == other.name,
+            self.installed_version == other.installed_version,
+            self.remote_version == other.remote_version,
+            self.requirements_file == other.requirements_file,
+        ])
+
+    def __hash__(self):
+        return reduce(operator.xor, map(hash, [self.name,
+                                               self.installed_version,
+                                               self.remote_version,
+                                               self.requirements_file]))
 
 
 Version = collections.namedtuple('Version', ['major', 'minor', 'rev'])
