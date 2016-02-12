@@ -2,7 +2,7 @@ import subprocess
 import sys
 
 import click
-from recheck import requirements, textui
+from recheck import requirements, textui as ui
 
 
 @click.option('-r', '--requirements-file', metavar='PATH_TO_REQUIREMENTS_FILE',
@@ -22,13 +22,13 @@ def main(requirements_file, ignore_file):
     ignored, outdated_major, outdated_minor = set(), set(), set()
     for line in _list_oudated_requirements(requirements_parser.index_url,
                                            requirements_parser.extra_index_urls):
-        textui.progress()
+        ui.progress()
         req = requirements.parse_result(line)
         if not req:
             # the output does not resemble an outdated requirement
             continue
 
-        if not req.name in requirements_parser.direct_requirements:
+        if req.name not in requirements_parser.direct_requirements:
             # not a direct requirement
             continue
 
@@ -44,10 +44,10 @@ def main(requirements_file, ignore_file):
             outdated_major.add(req)
             continue
 
-    textui.newline()
+    ui.newline()
 
-    _render_outdated_requirements('Minor upgrades:', outdated_minor, 'yellow')
-    _render_outdated_requirements('Major upgrades:', outdated_major, 'red')
+    _display_outdated_requirements('Minor upgrades:', outdated_minor, 'yellow')
+    _display_outdated_requirements('Major upgrades:', outdated_major, 'red')
 
     if outdated_major or outdated_minor:
         sys.exit(1)
@@ -59,20 +59,20 @@ def _build_pip_list_arg(index_url, extra_index_urls):
         args.append('--index-url={}'.format(index_url))
 
     if extra_index_urls:
-        args.extend(['--extra-index-url={}'.format(index_url)
-                     for index_url in extra_index_urls])
+        args.extend(['--extra-index-url={}'.format(extra_index_url)
+                     for extra_index_url in extra_index_urls])
 
     return args
 
 
-def _render_outdated_requirements(prompt, requirement_set, colour):
+def _display_outdated_requirements(prompt, requirement_set, colour):
     if requirement_set:
-        textui.echo(prompt, colour='white')
+        ui.echo(prompt, colour='white')
 
     for req in requirement_set:
-        textui.render_requirement(req, colour=colour)
+        ui.render_requirement(req, colour=colour)
 
-    textui.newline()
+    ui.newline()
 
 
 def _list_oudated_requirements(index_url, extra_index_urls):
