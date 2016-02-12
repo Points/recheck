@@ -32,6 +32,10 @@ def main(requirements_file, ignore_file):
             # not a direct requirement
             continue
 
+        requirements_file = requirements_parser.direct_requirements[req.name]
+
+        req.requirements_file = requirements_file
+
         if req.name in ignored_requirements:
             ignored.add(req)
             continue

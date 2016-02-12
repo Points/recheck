@@ -3,9 +3,45 @@ import os
 import re
 
 
-OutdatedRequirement = collections.namedtuple('OutdatedRequirement',
-                                             ['name', 'installed_version',
-                                              'remote_version'])
+class OutdatedRequirement(object):
+    def __init__(self, name, installed_version, remote_version,
+                 requirements_file=None):
+        self._name = name
+        self._installed_version = installed_version
+        self._remote_version = remote_version
+        self._requirements_file = requirements_file
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def installed_version(self):
+        return self._installed_version
+
+    @property
+    def remote_version(self):
+        return self._remote_version
+
+    @property
+    def requirements_file(self):
+        return self._requirements_file
+
+    @requirements_file.setter
+    def requirements_file(self, requirements_file):
+        self._requirements_file = requirements_file
+
+    @property
+    def status(self):
+        installed_version = _parse_version(self.installed_version)
+        remote_version = _parse_version(self.remote_version)
+
+        if installed_version.major < remote_version.major:
+            return 'outdated:major'
+        if installed_version.minor < remote_version.minor:
+            return 'outdated:minor'
+        if installed_version.rev < remote_version.rev:
+            return 'outdated:rev'
 
 
 Version = collections.namedtuple('Version', ['major', 'minor', 'rev'])
@@ -95,21 +131,6 @@ def _parse_version(version_str):
         rev = int_or_str(parts[2])
 
     return Version(major, minor, rev)
-
-
-def _status(self):
-    installed_version = _parse_version(self.installed_version)
-    remote_version = _parse_version(self.remote_version)
-
-    if installed_version.major < remote_version.major:
-        return 'outdated:major'
-    if installed_version.minor < remote_version.minor:
-        return 'outdated:minor'
-    if installed_version.rev < remote_version.rev:
-        return 'outdated:rev'
-
-
-OutdatedRequirement.status = property(_status)
 
 
 def parse_result(line):
