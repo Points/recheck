@@ -3,6 +3,10 @@
 test:
 	py.test tests
 
+tag:
+	git tag releases/$(shell cat VERSION)
+	git push --tags
+
 build:
 	python setup.py sdist bdist_wheel
 
