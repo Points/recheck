@@ -1,9 +1,9 @@
 recheck
 =======
 
-.. image:: https://pypip.in/v/recheck/badge.png
-    :target: https://pypi.python.org/pypi/recheck
-    :alt: Latest PyPI version
+.. image:: https://badge.fury.io/py/recheck.svg
+    :target: https://badge.fury.io/py/recheck
+	:alt: Latest PyPI version
 
 .. image:: https://travis-ci.org/kevinjqiu/recheck.png
    :target: https://travis-ci.org/kevinjqiu/recheck
