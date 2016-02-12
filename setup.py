@@ -4,6 +4,8 @@ install_requires = open('requirements.txt').readlines()
 
 version = open('VERSION').read().strip()
 
+long_description = open('README.rst').read().strip()
+
 setuptools.setup(
     name="recheck",
     version=version,
@@ -13,7 +15,7 @@ setuptools.setup(
     author_email="kevin.qiu@points.com",
 
     description="Re(quirements)Check",
-    long_description=open('README.rst').read(),
+    long_description=long_description,
 
     packages=setuptools.find_packages(),
 

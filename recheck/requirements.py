@@ -41,8 +41,8 @@ class OutdatedRequirement(object):
             return 'outdated:major'
         if installed_version.minor < remote_version.minor:
             return 'outdated:minor'
-        if installed_version.rev < remote_version.rev:
-            return 'outdated:rev'
+        if installed_version.patch < remote_version.patch:
+            return 'outdated:patch'
 
     def __eq__(self, other):
         return all([
@@ -59,7 +59,7 @@ class OutdatedRequirement(object):
                                                self.requirements_file]))
 
 
-Version = collections.namedtuple('Version', ['major', 'minor', 'rev'])
+Version = collections.namedtuple('Version', ['major', 'minor', 'patch'])
 
 
 def _read_lines_from_file(filename):
@@ -86,12 +86,10 @@ class RequirementsParser(object):
             if not os.path.isabs(filepath):
                 filepath = os.path.join(self._dirname, filepath)
             self._requirements_files.append(filepath)
-        if directive == '--index-url':
+        elif directive == '--index-url':
             self._index_url = value.strip()
-        if directive == '--extra-index-url':
+        elif directive == '--extra-index-url':
             self._extra_index_urls.append(value.strip())
-        if directive == '-e':
-            pass  # TODO: Need to handle editable installs?
 
     def _handle_requirement_line(self, requirement_file, line):
         result = re.split('==|>|<|>=|<=', line)
@@ -136,16 +134,16 @@ def _parse_version(version_str):
         except ValueError:
             return s
 
-    major, minor, rev = None, None, None
+    major, minor, patch = None, None, None
     parts = version_str.split('.', 3)
     if len(parts) > 0:
         major = int_or_str(parts[0])
     if len(parts) > 1:
         minor = int_or_str(parts[1])
     if len(parts) > 2:
-        rev = int_or_str(parts[2])
+        patch = int_or_str(parts[2])
 
-    return Version(major, minor, rev)
+    return Version(major, minor, patch)
 
 
 def parse_result(line):
@@ -159,7 +157,7 @@ def parse_result(line):
 
 def get_ignored_requirements(ignore_file):
     if not os.path.exists(ignore_file):
-        return set([])
+        return set()
 
     with open(ignore_file) as f:
         return set(map(str.strip, f.readlines()))

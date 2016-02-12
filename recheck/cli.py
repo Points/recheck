@@ -2,7 +2,7 @@ import subprocess
 import sys
 
 import click
-from recheck import requirements, textui as ui
+from recheck import requirements, textui
 
 
 @click.option('-r', '--requirements-file', metavar='PATH_TO_REQUIREMENTS_FILE',
@@ -22,7 +22,7 @@ def main(requirements_file, ignore_file):
     ignored, outdated_major, outdated_minor = set(), set(), set()
     for line in _list_oudated_requirements(requirements_parser.index_url,
                                            requirements_parser.extra_index_urls):
-        ui.progress()
+        textui.progress()
         requirement = requirements.parse_result(line)
         if not requirement:
             # the output does not resemble an outdated requirement
@@ -44,7 +44,7 @@ def main(requirements_file, ignore_file):
         elif requirement.status == 'outdated:major':
             outdated_major.add(requirement)
 
-    ui.newline()
+    textui.newline()
 
     _display_outdated_requirements('Minor upgrades:', outdated_minor, 'yellow')
     _display_outdated_requirements('Major upgrades:', outdated_major, 'red')
@@ -52,7 +52,7 @@ def main(requirements_file, ignore_file):
     if outdated_major or outdated_minor:
         sys.exit(1)
     else:
-        ui.echo('OK', 'white')
+        textui.echo('OK', 'white')
 
 
 def _build_pip_list_arg(index_url, extra_index_urls):
@@ -69,12 +69,12 @@ def _build_pip_list_arg(index_url, extra_index_urls):
 
 def _display_outdated_requirements(prompt, requirement_set, colour):
     if requirement_set:
-        ui.echo(prompt, colour='white')
+        textui.echo(prompt, colour='white')
 
     for req in requirement_set:
-        ui.render_requirement(req, colour=colour)
+        textui.render_requirement(req, colour=colour)
 
-    ui.newline()
+    textui.newline()
 
 
 def _list_oudated_requirements(index_url, extra_index_urls):

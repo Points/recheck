@@ -13,11 +13,6 @@ build:
 upload:
 	python setup.py bdist_wheel upload
 
-testbuild:
-	py.test tests && make build
-	virtualenv2 .tmp
-	.tmp/bin/pip install dist/*
-
 clean:
 	rm -fr .tmp/
 	rm -fr dist/
