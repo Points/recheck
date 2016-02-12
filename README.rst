@@ -5,8 +5,8 @@ recheck
     :target: https://pypi.python.org/pypi/recheck
     :alt: Latest PyPI version
 
-.. image:: https://travis-ci.org/borntyping/cookiecutter-pypackage-minimal.png
-   :target: https://travis-ci.org/borntyping/cookiecutter-pypackage-minimal
+.. image:: https://travis-ci.org/kevinjqiu/recheck.png
+   :target: https://travis-ci.org/kevinjqiu/recheck
    :alt: Latest Travis CI build status
 
 Re(quirements)Check
