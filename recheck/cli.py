@@ -23,30 +23,26 @@ def main(requirements_file, ignore_file):
     for line in _list_oudated_requirements(requirements_parser.index_url,
                                            requirements_parser.extra_index_urls):
         ui.progress()
-        req = requirements.parse_result(line)
-        if not req:
+        requirement = requirements.parse_result(line)
+        if not requirement:
             # the output does not resemble an outdated requirement
             continue
 
-        if req.name not in requirements_parser.direct_requirements:
-            # not a direct requirement
+        if requirement.name not in requirements_parser.direct_requirements:
             continue
 
-        requirements_file = requirements_parser.direct_requirements[req.name]
+        requirements_file = requirements_parser.direct_requirements[requirement.name]
 
-        req.requirements_file = requirements_file
+        requirement.requirements_file = requirements_file
 
-        if req.name in ignored_requirements:
-            ignored.add(req)
+        if requirement.name in ignored_requirements:
+            ignored.add(requirement)
             continue
 
-        if req.status == 'outdated:minor':
-            outdated_minor.add(req)
-            continue
-
-        if req.status == 'outdated:major':
-            outdated_major.add(req)
-            continue
+        if requirement.status == 'outdated:minor':
+            outdated_minor.add(requirement)
+        elif requirement.status == 'outdated:major':
+            outdated_major.add(requirement)
 
     ui.newline()
 
