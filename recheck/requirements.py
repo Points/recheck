@@ -115,7 +115,7 @@ OutdatedRequirement.status = property(_status)
 def parse_result(line):
     try:
         name, info = line.strip().split(' ', 1)
-        _, installed_version, _, remote_version = info[1:-1].split(' ')
+        _, installed_version, _, remote_version = info[1:-1].split(' ')[:4]
         return OutdatedRequirement(name, installed_version, remote_version)
     except ValueError:
         return None

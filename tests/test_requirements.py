@@ -1,9 +1,7 @@
-import collections
 import contextlib
 import operator
 
 import mock
-import pytest
 from recheck import requirements
 
 
@@ -25,58 +23,69 @@ def assert_direct_requirements(requirements_file_lines, expected_direct_requirem
 
 
 def test_no_direct_requirements():
-    assert_direct_requirements([], set())
+    assert_direct_requirements([], {})
 
 
 def test_direct_requirements_single_file():
-    assert_direct_requirements(['requests==1.3'], set(['requests']))
+    assert_direct_requirements(['requests==1.3'],
+                               {'requests': 'requirements.txt'})
 
 
 def test_multiple_direct_requirements_single_file():
-    assert_direct_requirements(['requests==1.3', 'mock==0.1'], set(['requests', 'mock']))
+    assert_direct_requirements(['requests==1.3', 'mock==0.1'],
+                               {'requests': 'requirements.txt',
+                                'mock': 'requirements.txt'})
 
 
 def test_direct_requirements_no_version_single_file():
-    assert_direct_requirements(['requests'], set(['requests']))
+    assert_direct_requirements(['requests'], {'requests': 'requirements.txt'})
 
 
 def test_direct_requirements_range_requirement():
-    assert_direct_requirements(['requests>1.6'], set(['requests']))
-    assert_direct_requirements(['requests<1.6'], set(['requests']))
-    assert_direct_requirements(['requests<=1.6'], set(['requests']))
-    assert_direct_requirements(['requests>=1.6'], set(['requests']))
+    assert_direct_requirements(['requests>1.6'],
+                               {'requests': 'requirements.txt'})
+    assert_direct_requirements(['requests<1.6'],
+                               {'requests': 'requirements.txt'})
+    assert_direct_requirements(['requests<=1.6'],
+                               {'requests': 'requirements.txt'})
+    assert_direct_requirements(['requests>=1.6'],
+                               {'requests': 'requirements.txt'})
 
 
 def test_direct_requirements_with_spaces_around_requirement():
-    assert_direct_requirements(['requests >1.6'], set(['requests']))
-    assert_direct_requirements(['requests ==1.6'], set(['requests']))
-    assert_direct_requirements([' requests ==1.6'], set(['requests']))
+    assert_direct_requirements(['requests >1.6'],
+                               {'requests': 'requirements.txt'})
+    assert_direct_requirements(['requests ==1.6'],
+                               {'requests': 'requirements.txt'})
+    assert_direct_requirements([' requests ==1.6'],
+                               {'requests': 'requirements.txt'})
 
 
 def test_direct_requirements_with_comment_line():
-    assert_direct_requirements(['requests>1.6', '#this is a comment'], set(['requests']))
+    assert_direct_requirements(['requests>1.6', '#this is a comment'],
+                               {'requests': 'requirements.txt'})
 
 
 def test_with_index_url():
     assert_direct_requirements(['requests>1.6',
                                 '--index-url=http://index.example.com'],
-                               set(['requests']),
+                               {'requests': 'requirements.txt'},
                                'http://index.example.com')
     assert_direct_requirements(['requests>1.6', '--index-url http://index.example.com'],
-                               set(['requests']),
+                               {'requests': 'requirements.txt'},
                                'http://index.example.com')
 
 
 def test_with_extra_index_urls():
     assert_direct_requirements(['requests>1.6',
                                 '--extra-index-url=http://index.example.com'],
-                               set(['requests']),
+                               {'requests': 'requirements.txt'},
                                None,
                                ['http://index.example.com'])
     assert_direct_requirements(['--extra-index-url=http://index0.example.com',
                                 'requests>1.6',
                                 '--extra-index-url=http://index1.example.com'],
-                               set(['requests']),
+                               {'requests': 'requirements.txt'},
                                None,
                                ['http://index0.example.com',
                                 'http://index1.example.com'])
@@ -92,7 +101,10 @@ def test_direct_requirements_with_one_level_of_includes():
     with mock.patch('recheck.requirements._read_lines_from_file') as mock_read_lines_from_file:
         mock_read_lines_from_file.side_effect = filelines
         requirements_parser = requirements.RequirementsParser(filenames[0])
-        assert requirements_parser.direct_requirements == set(['requests', 'argparse'])
+        assert requirements_parser.direct_requirements == {
+            'requests': 'requirements.txt',
+            'argparse': 'base.txt',
+        }
         assert [mock.call(requirements_file_name)
                 for requirements_file_name in filenames] == mock_read_lines_from_file.call_args_list
 
@@ -107,6 +119,8 @@ def test_parse_result():
     assert_outdated_requirement('pytz (Current: 2015.6 Latest: 2015.7)',
                                 requirements.OutdatedRequirement('pytz', '2015.6', '2015.7'))
     assert_outdated_requirement('Blah', None)
+    assert_outdated_requirement('requests (Current: 2.7.0 Latest: 2.9.1 [wheel])',
+                                requirements.OutdatedRequirement('requests', '2.7.0', '2.9.1'))
 
 
 def assert_parse_version(version_str, expected_version):

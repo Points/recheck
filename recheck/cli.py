@@ -51,6 +51,8 @@ def main(requirements_file, ignore_file):
 
     if outdated_major or outdated_minor:
         sys.exit(1)
+    else:
+        ui.echo('OK', 'white')
 
 
 def _build_pip_list_arg(index_url, extra_index_urls):
