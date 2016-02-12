@@ -19,3 +19,6 @@ clean:
 	rm -fr dist/
 	rm -fr build/
 	find -name \*.pyc -delete
+
+lint:
+	flake8 --max-line-length=120 recheck
