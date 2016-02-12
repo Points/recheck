@@ -2,9 +2,11 @@ import setuptools
 
 install_requires = open('requirements.txt').readlines()
 
+version = open('VERSION').read().strip()
+
 setuptools.setup(
     name="recheck",
-    version="0.1.0",
+    version=version,
     url="https://github.com/kevinjqiu/recheck",
 
     author="Kevin J. Qiu",
