@@ -4,10 +4,10 @@ test:
 	py.test tests
 
 build:
-	python setup.py bdist_wheel
+	python setup.py sdist bdist_wheel
 
 upload:
-	python setup.py upload
+	python setup.py bdist_wheel upload
 
 testbuild:
 	py.test tests && make build
