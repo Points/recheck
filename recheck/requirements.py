@@ -2,10 +2,13 @@ import collections
 import os
 import re
 
-from pip.commands import list as pip_list
-from pip import req as pip_req
-from pip import index as pip_index
-from pip import download as pip_download
+
+OutdatedRequirement = collections.namedtuple('OutdatedRequirement',
+                                             ['name', 'installed_version',
+                                              'remote_version'])
+
+
+Version = collections.namedtuple('Version', ['major', 'minor', 'rev'])
 
 
 def _read_lines_from_file(filename):
@@ -17,7 +20,7 @@ class RequirementsParser(object):
     def __init__(self, requirements_file):
         self._dirname = os.path.dirname(requirements_file)
         self._requirements_files = collections.deque([requirements_file])
-        self._direct_requirements = set()
+        self._direct_requirements = {}
         self._index_url = None
         self._extra_index_urls = []
         self._parse()
@@ -39,11 +42,12 @@ class RequirementsParser(object):
         if directive == '-e':
             pass  # TODO: Need to handle editable installs?
 
-    def _handle_requirement_line(self, line):
+    def _handle_requirement_line(self, requirement_file, line):
         result = re.split('==|>|<|>=|<=', line)
         req = result[0].strip()
-        if req:
-            self.direct_requirements.add(req.strip())
+        if not req:
+            return
+        self.direct_requirements[req.strip()] = requirement_file
 
     def _parse(self):
         try:
@@ -56,7 +60,7 @@ class RequirementsParser(object):
                     elif line.startswith('-'):
                         self._handle_pip_directive(line)
                     else:
-                        self._handle_requirement_line(line)
+                        self._handle_requirement_line(requirement_file, line)
         except IndexError:
             # No unprocessed requirements file. Parsing complete
             return None
@@ -72,13 +76,6 @@ class RequirementsParser(object):
     @property
     def extra_index_urls(self):
         return self._extra_index_urls
-
-
-OutdatedRequirement = collections.namedtuple('OutdatedRequirement',
-                                             ['name', 'installed_version', 'remote_version'])
-
-
-Version = collections.namedtuple('Version', ['major', 'minor', 'rev'])
 
 
 def _parse_version(version_str):
@@ -101,7 +98,7 @@ def _parse_version(version_str):
 
 
 def _status(self):
-    installed_version =  _parse_version(self.installed_version)
+    installed_version = _parse_version(self.installed_version)
     remote_version = _parse_version(self.remote_version)
 
     if installed_version.major < remote_version.major:
