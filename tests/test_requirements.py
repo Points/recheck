@@ -137,4 +137,4 @@ def test_parse_version():
 def test_outdated_requirement_status():
     assert requirements.OutdatedRequirement('foo', '1.2', '1.3.0').status == 'outdated:minor'
     assert requirements.OutdatedRequirement('foo', '2.2', '5.3.0').status == 'outdated:major'
-    assert requirements.OutdatedRequirement('foo', '5.3.0', '5.3.3').status == 'outdated:rev'
+    assert requirements.OutdatedRequirement('foo', '5.3.0', '5.3.3').status == 'outdated:patch'
